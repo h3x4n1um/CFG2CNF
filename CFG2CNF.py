@@ -129,7 +129,7 @@ class CFG():
                             nullable.add(key)
                             stop = False
 
-        #print("nullable:{}".format(nullable))
+        # print("nullable:{}".format(nullable))
         if len(nullable) > 0:
             # remove x -> epsilon
             for key in nullable:
@@ -142,26 +142,40 @@ class CFG():
                         if c in rule:
                             #print("key: {}\trule: {}".format(key, rule))
                             ommited = self.epsilon_ommit(nullable, rule)
-                            #print(ommited)
+                            # print(ommited)
                             self.union_rule(key, ommited)
 
     # Eliminate unit rules
     def UNIT(self):
-        for var in self.V.copy():
-            for rule in self.get_rule(var).copy():
-                rule = rule.split(',')
-                if len(rule) == 1:
-                    tmp = self.delimiter.join(rule)
-                    if tmp in self.V:
-                        self.union_rule(var, self.get_rule(tmp))
-                        self.remove_rule(var, tmp)
+        stop = False
+        while stop == False:
+            stop = True
+
+            for var in self.V.copy():
+                for rule in self.get_rule(var).copy():
+                    rule = rule.split(',')
+
+                    if len(rule) == 1:
+                        tmp = self.delimiter.join(rule)
+
+                        if tmp in self.V:
+                            stop = False
+                            self.union_rule(var, self.get_rule(tmp))
+                            self.remove_rule(var, tmp)
+                            self.remove_rule(var, var)
 
     def to_CNF(self):
+        print(self)
         self.START()
+        print(self)
         self.TERM()
+        print(self)
         self.BIN()
+        print(self)
         self.DEL()
+        print(self)
         self.UNIT()
+        print(self)
 
     def __repr__(self):
         return "\n\tV={}\n\tT={}\n\tP={}\n\tS={}\n\tdelimiter={}\n\tepsilon={}".format(
@@ -208,9 +222,7 @@ def main():
         },
         S='S'
     )
-    print(cfg)
     cfg.to_CNF()
-    print(cfg)
 
 
 if __name__ == "__main__":
