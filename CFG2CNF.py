@@ -23,7 +23,7 @@ class CFG():
         for rule in rule_set:
             self.add_rule(var, rule)
 
-    # add rule key -> value
+    # add rule var -> value
     def add_rule(self, var, rule):
         self.V.add(var)
 
@@ -37,7 +37,7 @@ class CFG():
         else:
             self.P[var].add(rule)
 
-    # remove rule key -> value
+    # remove rule var -> value
     def remove_rule(self, var, rule):
         self.P.get(var, set()).discard(rule)
 
@@ -52,9 +52,9 @@ class CFG():
         for c in self.T:
             sub[c] = 'C'+c
 
-        for key in self.V.copy():
-            for rule in self.get_rule(key).copy():
-                self.remove_rule(key, rule)
+        for var in self.V.copy():
+            for rule in self.get_rule(var).copy():
+                self.remove_rule(var, rule)
                 rule = rule.split(self.delimiter)
 
                 if len(rule) > 1:
@@ -63,26 +63,26 @@ class CFG():
                         if c in self.T:
                             self.add_rule(sub[c], c)
                             c = sub[c]
-                            #print("key: {}\trule:{}\t{}".format(key, rule, c))
+                            #print("var: {}\trule:{}\t{}".format(var, rule, c))
                         rule[i] = c
 
                 rule = self.delimiter.join(rule)
-                self.add_rule(key, rule)
+                self.add_rule(var, rule)
 
     # Eliminate right-hand sides with more than 2 nonterminals
     def BIN(self):
         cnt = 1
-        for key in self.V.copy():
-            for rule in self.get_rule(key).copy():
+        for var in self.V.copy():
+            for rule in self.get_rule(var).copy():
                 rule = rule.split(self.delimiter)
 
                 if len(rule) > 2 and set(rule).issubset(self.V):
-                    self.remove_rule(key, self.delimiter.join(rule))
+                    self.remove_rule(var, self.delimiter.join(rule))
                     tmp = rule
 
                     v = 'C'+str(cnt)
                     cnt = cnt+1
-                    self.add_rule(key, tmp.pop(0)+','+v)
+                    self.add_rule(var, tmp.pop(0)+','+v)
 
                     while len(tmp) > 2:
                         pre_v = v
@@ -91,7 +91,7 @@ class CFG():
                         self.add_rule(pre_v, pre_v+','+tmp.pop(0))
                     self.add_rule(v, self.delimiter.join(tmp))
                 else:
-                    self.add_rule(key, self.delimiter.join(rule))
+                    self.add_rule(var, self.delimiter.join(rule))
 
     # Eliminate ε-rules
     def epsilon_ommit(self, nullable, rule):
@@ -117,33 +117,33 @@ class CFG():
         while stop == False:
             stop = True
 
-            for key in self.V.copy():
-                if key not in nullable and key != self.S:
-                    for rule in self.get_rule(key):
+            for var in self.V.copy():
+                if var not in nullable and var != self.S:
+                    for rule in self.get_rule(var):
                         rule = rule.split(self.delimiter)
 
                         if len(rule) == 1 and self.delimiter.join(rule) == self.epsilon:
-                            nullable.add(key)
+                            nullable.add(var)
                             stop = False
                         elif set(rule).issubset(self.V) and set(rule).issubset(nullable):
-                            nullable.add(key)
+                            nullable.add(var)
                             stop = False
 
-        # print("nullable:{}".format(nullable))
+        #print("nullable:{}".format(nullable))
         if len(nullable) > 0:
             # remove x -> epsilon
-            for key in nullable:
-                self.remove_rule(key, self.epsilon)
+            for var in nullable:
+                self.remove_rule(var, self.epsilon)
 
-            for key in self.V.copy():
-                for rule in self.get_rule(key).copy():
+            for var in self.V.copy():
+                for rule in self.get_rule(var).copy():
                     rule = rule.split(self.delimiter)
                     for c in nullable:
                         if c in rule:
-                            #print("key: {}\trule: {}".format(key, rule))
+                            #print("var: {}\trule: {}".format(var, rule))
                             ommited = self.epsilon_ommit(nullable, rule)
-                            # print(ommited)
-                            self.union_rule(key, ommited)
+                            #print(ommited)
+                            self.union_rule(var, ommited)
 
     # Eliminate unit rules
     def UNIT(self):
@@ -165,17 +165,12 @@ class CFG():
                             self.remove_rule(var, var)
 
     def to_CNF(self):
-        print(self)
         self.START()
-        print(self)
         self.TERM()
-        print(self)
         self.BIN()
-        print(self)
         self.DEL()
-        print(self)
         self.UNIT()
-        print(self)
+        
 
     def __repr__(self):
         return "\n\tV={}\n\tT={}\n\tP={}\n\tS={}\n\tdelimiter={}\n\tepsilon={}".format(
@@ -189,9 +184,9 @@ class CFG():
 
     def __str__(self):
         P_str = ''
-        for key, value in self.P.items():
+        for var, value in self.P.items():
             P_str = P_str + \
-                "\n\t\t{}\t->\t{}".format(key, " | ".join(list(value)))
+                "\n\t\t{}\t->\t{}".format(var, " | ".join(list(value)))
 
         return "\nG(V, T, P, S):\n\tV={}\n\tT={}\n\tP={}\n\tS={}".format(
             self.V,
@@ -222,7 +217,9 @@ def main():
         },
         S='S'
     )
+    print(cfg)
     cfg.to_CNF()
+    print(cfg)
 
 
 if __name__ == "__main__":
